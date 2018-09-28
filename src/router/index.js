@@ -6,6 +6,7 @@ import App from '../App'
 Vue.use(Router)
 
 const home = r => require.ensure([], () => r(require('../page/home/home')), 'home')
+const city = r => require.ensure([], () => r(require('../page/city/city')), 'city')
 
 const routes = [{
   path: '/',
@@ -20,6 +21,11 @@ const routes = [{
     {
       path: '/home',
       component: home
+    },
+    // 当前选择城市页
+    {
+      path: '/city/:cityId',
+      component: city
     }
   ]
 }]
