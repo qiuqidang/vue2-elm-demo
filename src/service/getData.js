@@ -14,7 +14,7 @@ export const cityGuess = () => fetch('/v1/cities', {
  * 获取首页热门城市
  */
 
-export const hotcity = () => fetch('/v1/cities', {
+export const hotCity = () => fetch('/v1/cities', {
 	type: 'hot'
 });
 
@@ -23,7 +23,7 @@ export const hotcity = () => fetch('/v1/cities', {
  * 获取首页所有城市
  */
 
-export const groupcity = () => fetch('/v1/cities', {
+export const groupCity = () => fetch('/v1/cities', {
 	type: 'group'
 });
 
