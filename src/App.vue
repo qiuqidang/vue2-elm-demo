@@ -8,7 +8,7 @@
     <transition name="router-fade" mode="out-in">
       <router-view v-if="!$route.meta.keepAlive"></router-view>
     </transition>
-    <sve-icon></sve-icon>
+    <svg-icon></svg-icon>
   </div>
 </template>
 
