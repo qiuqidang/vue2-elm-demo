@@ -1,37 +1,50 @@
 <template>
-  <div>
+  <div class="city_container">
     <head-top :head-title='cityName' :go-back='true'>
-        <router-link to='/home' slot='changecity'>切换城市</router-link>
+        <router-link to='/home' slot='changecity' class="change_city">切换城市</router-link>
     </head-top>
-    <div style="margin-top: 50px;">
-        <input type="text" v-model="searchText" placeholder="输入学校、商务楼、地址">
-        <input type="button" value='提交' @click="searchPlace">
-    </div>
-    <div>
-        <ul>
-            <li v-for="(item, key) in placeList" :key="key">
-                <span>{{item.name}}</span><br>
-                <span>{{item.address}}</span>
-            </li>
-        </ul>
-    </div>
+    <form class="city_form" v-on:submit.prevent>
+        <div>
+            <input type="search" name="city" placeholder="输入学校、商务楼、地址" class="city_input input_style" required v-model="inputValue">
+        </div>
+        <div>
+            <input type="submit" name="submit" value='提交' class="city_submit input_style" @click="searchPlace">
+        </div>
+    </form>
+    <header v-if="historyTitle" class="pois_search_history">搜索历史</header>
+    <ul class="getpois_ul">
+        <li v-for="(item, index) in placeList" :key="index" @click="nextPage(index, item.geohash)">
+            <h4 class="pois_name ellipsis">{{item.name}}</h4>
+            <p class="pois_address ellipsis">{{item.address}}</p>
+        </li>
+    </ul>
+    <footer class="clear_all_history" v-if="historyTitle && placeList.length" @click="clearAll">清空所有</footer>
+    <div class="search_none_place" v-if="placeNone">很抱歉！无搜索结果</div>
   </div>
 </template>
 
 <script>
-import headTop from '../../components/header/head'
+import headTop from 'src/components/header/head'
 import {
   currentcity,
   searchplace
-} from '../../service/getData'
+} from 'src/service/getData'
+import {
+  getStore,
+  setStore, 
+  removeStore
+} from 'src/config/mUtils'
 
 export default {
   data () {
     return {
       cityId: '', // 当前城市ID
-      cityName: 'test', // 当前城市名称
-      searchText: '', // 搜索内容
-      placeList: [] // 地址列表
+      cityName: '', // 当前城市名称
+      inputValue: '', // 搜索内容
+      placeList: [], // 搜索城市列表
+      placeHistory: [], // 历史搜索记录
+      historyTitle: true, // 默认显示搜索历史头部，点击搜索后隐藏
+      placeNone: false, // 搜索无结果，显示提示信息
     }
   },
 
@@ -39,15 +52,26 @@ export default {
 
   },
 
+  // async mounted () {
+  //   this.cityId = this.$route.params.cityId
+  //   let res = await currentcity(this.cityId)
+  //   this.cityName = res.name
+  //   this.initData()
+  // },
+
   mounted () {
-    // 获取当前城市
-    this.getCurrentCity()
+    this.cityId = this.$route.params.cityId
+    currentcity(this.cityId)
+      .then(res => {
+        this.cityName = res.name
+      })
+    this.initData()
   },
 
   props: [],
 
   components: {
-      headTop
+    headTop
   },
 
   computed: {
@@ -55,18 +79,71 @@ export default {
   },
 
   methods: {
-    // 当前城市
-    async getCurrentCity () {
-      this.cityId = this.$route.params.cityId
-      let res = await currentcity(this.cityId)
-      this.cityName = res.name
+    // 初始化数据
+    initData () {
+      // 获取搜索历史记录
+      let _placeHistory = getStore('placeHistory')
+      if (_placeHistory) {
+        this.placeList = JSON.parse(_placeHistory)
+      } else {
+        this.placeList.length = 0;
+      }
     },
 
     // 提交查询
-    async searchPlace () {
-        let res = await searchplace(this.cityId, this.searchText)
-        this.placeList = res
-    }
+    // async searchPlace () {
+    //   let res = await searchplace(this.cityId, this.inputValue)
+    //   this.placeList = res
+    // },
+
+    searchPlace () {
+      // 输入值不为空时才发送信息
+      if (this.inputValue) {
+        searchplace(this.cityId, this.inputValue)
+          .then(res => {
+            this.historyTitle = false
+            this.placeList = res
+            this.placeNone = res.length ? false : true
+          })
+      }
+    },
+
+    // 跳转到下个界面
+    /**
+     * 点击搜索结果进入下一页面时进行判断是否已经有一样的历史记录
+     * 如果没有则新增，如果有则不做重复储存，判断完成后进入下一页
+     */
+    nextPage (index, geohash) {
+      let _placeHistory = getStore('placeHistory')
+      let choosePlace = this.placeList[index]
+      if (_placeHistory) {
+        let checkRepeat = false
+        this.placeHistory = JSON.parse(_placeHistory)
+        this.placeHistory.forEach(item => {
+          if (item.geohash === geohash) {
+            checkRepeat = true
+          }
+        })
+        if (!checkRepeat) {
+          this.placeHistory.push(choosePlace)
+        }
+      } else {
+        this.placeHistory.push(choosePlace)
+      }
+      setStore('placeHistory', this.placeHistory)
+      this.$router.push({
+        path: '/msite',
+        query: {
+          geohash
+        }
+      })
+    },
+
+    // 清空所有
+    clearAll () {
+      removeStore('placeHistory')
+      this.initData()
+    },
   },
 }
 </script>
