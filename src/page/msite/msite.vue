@@ -22,7 +22,7 @@
     <div class="shop_list_container">
       <ul>
         <router-link v-for="item in shopList" :key="item.id" :to="{path: '/shop'}" tag="li" class="shop_header">
-          <!-- <img :src="'https://fuss10.elemecdn.com' + item.image_path" alt=""> -->
+          <img :src="'https://fuss10.elemecdn.com' + item.image_path" alt="">
           <span>{{item.name}}</span>
           <span>{{item.piecewise_agent_fee.tips}}</span>
         </router-link>
